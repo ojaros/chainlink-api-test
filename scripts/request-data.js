@@ -18,6 +18,8 @@ const url =
 const path = process.env.TRUFFLE_CL_BOX_JSON_PATH || 'grid.elements.0.url'
 // const times = process.env.TRUFFLE_CL_BOX_TIMES || '100'
 
+const name = 'TestNFT'
+
 module.exports = async callback => {
   const mc = await MyContract.deployed()
   console.log('Creating request on contract:', mc.address)
@@ -27,6 +29,7 @@ module.exports = async callback => {
     // payment,
     url,
     path,
+    name,
     // times,
   )
   console.log('request complete')

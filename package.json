@@ -16,10 +16,14 @@
   "license": "MIT",
   "dependencies": {
     "@chainlink/contracts": "^0.2.1",
-    "@openzeppelin/contracts": "^3.4.0",
+    "@openzeppelin/contracts": "^4.2.0",
     "@truffle/hdwallet-provider": "^1.2.1",
+    "axios": "^0.21.4",
     "chainlink": "^0.8.2",
-    "dotenv": "^8.2.0"
+    "dotenv": "^8.2.0",
+    "form-data": "^4.0.0",
+    "node-fetch": "^3.0.0",
+    "xmlhttprequest": "^1.8.0"
   },
   "devDependencies": {
     "@chainlink/belt": "^0.0.3",

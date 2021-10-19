@@ -2,6 +2,8 @@
 pragma solidity ^0.8.0;
 
 import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
 /**
  * @title MyContract is an example contract which requests data from
@@ -9,12 +11,19 @@ import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
  * @dev This contract is designed to work on multiple networks, including
  * local test networks
  */
-contract MyContract is ChainlinkClient {
+contract MyContract is ChainlinkClient, ERC721 {
   using Chainlink for Chainlink.Request;
 
   address constant ORACLE = 0xF405B99ACa8578B9eb989ee2b69D518aaDb90c1F;
   bytes32 constant JOB_ID = bytes32("7c4b968028f74b2eabd7d428f03ba45c");
   uint256 constant FEE = 0.1 * 10 ** 18;
+
+  bytes32 internal keyHash;
+  uint256 public fee;
+  uint256 public tokenCounter;
+
+  enum Game{FORTNITE, CSGO, MINECRAFT}
+
 
   // bytes32 public data;
 
@@ -22,86 +31,98 @@ contract MyContract is ChainlinkClient {
   string public image_url;
 
   struct Clip {
-      string c;
+      string name;
+      string url;
   }
 
   Clip[] public clips;
 
+  mapping(bytes32 => string) public requestToClipName;
+  mapping(bytes32 => address) public requestIdToSender;
+  mapping(bytes32 => string) public requestIdToTokenURI;
 
-  /**
-   * @notice Deploy the contract with a specified address for the LINK
-   * and Oracle contract addresses
-   * @dev Sets the storage for the specified addresses
-   * @param _link The address of the LINK token contract
-   */
-  constructor(address _link) public {
+  event requestedCollectible(bytes32 indexed requestId);
+
+  mapping(bytes32 => uint256) requestToTokenId;
+
+
+  constructor(address _link) 
+  ERC721("Tests", "TST")
+  public 
+  {
     if (_link == address(0)) {
       setPublicChainlinkToken();
     } else {
       setChainlinkToken(_link);
     }
     setChainlinkOracle(0xF405B99ACa8578B9eb989ee2b69D518aaDb90c1F);
+    tokenCounter = 0;
+  }
+
+  function createCollectible(string memory tokenURI) public returns (bytes32) {
 
   }
 
-  /**
-   * @notice Returns the address of the LINK token
-   * @dev This is the public implementation for chainlinkTokenAddress, which is
-   * an internal method of the ChainlinkClient contract
-   */
+
   function getChainlinkToken() public view returns (address) {
     return chainlinkTokenAddress();
   }
 
-  /**
-   * @notice Creates a request to the specified Oracle contract address
-   * @dev This function ignores the stored Oracle contract address and
-   * will instead send the request to the address specified
-   * @param _url The URL to fetch data from
-   * @param _path The dot-delimited path to parse of the response
-   */
+
   function createRequestTo(
     string memory _url,
-    string memory _path
-    // int256 _times
+    string memory _path,
+    string memory tokenURI
   )
     public
     returns (bytes32 requestId) 
   {
-    // bytes32 specId = "7c4b968028f74b2eabd7d428f03ba45c";
-
     Chainlink.Request memory req = buildChainlinkRequest(JOB_ID, address(this), this.fulfill.selector);
     req.add("get", _url);
     req.add("path", _path);
     // requestOracleData(req, FEE);
+
     requestId = sendChainlinkRequestTo(ORACLE, req, FEE);
+    // requestToClipName[requestId] = name;
+    requestIdToTokenURI[requestId] = tokenURI;
+    requestIdToSender[requestId] = msg.sender;
+    return requestId;
   }
 
   // event RequestFulfilled(bytes32 indexed requestId, bytes indexed data);
 
-  /**
-   * @notice The fulfill method from requests created by this contract
-   * @dev The recordChainlinkFulfillment protects this function from being called
-   * by anyone other than the oracle address that the request was sent to
-   * @param _requestId The ID that was generated for the request
-   * @param _data The answer provided by the oracle
-   */
+
   function fulfill(bytes32 _requestId, bytes32 _data)
     public
     recordChainlinkFulfillment(_requestId)
   {
+    address nftOwner = requestIdToSender[_requestId];
+    uint256 newId = clips.length;
+    string memory tokenURI = requestIdToTokenURI[_requestId];
+
+    // _safeMint(nftOwner, newItemId);
+    // _setTokenURI(newItemId, tokenURI);
+
     // emit RequestFulfilled(requestId, bytesData);
     data = _data;
-    // image_url = string(data);
-
-    string memory c = bytes32ToString(data);
+    image_url = bytes32ToString(data);
 
     clips.push(
         Clip(
-            c
+            requestIdToTokenURI[_requestId],
+            image_url
         )
     );
+    _safeMint(nftOwner, newId);
   }
+
+  // function setTokenURI(uint256 tokenId, string memory _tokenURI) public {
+  //   require(
+  //     _isApprovedOrOwner(_msgSender(), tokenId),
+  //     "ERC721: transfer caller is not owner nor approved"
+  //   );
+  //   _setTokenURI(tokenId, _tokenURI);
+  // }
 
   function getNumberOfClips() public view returns (uint256) {
     return clips.length;

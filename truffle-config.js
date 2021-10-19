@@ -31,9 +31,13 @@ module.exports = {
       skipDryRun: true
     },
     rinkeby: {
-      provider: () => {
-        return new HDWalletProvider(mnemonic, url)
-      },
+      host: '127.0.0.1',
+      port: 8545,
+      // provider: () => {
+      //   return new HDWalletProvider(mnemonic, url)
+      // },
+      gas: 4700000,
+      from: "0x6773Ec31Aa7719b30A02A3Ab151a2b578eF17842",
       network_id: '4',
       skipDryRun: true
     },
